@@ -1,22 +1,19 @@
 <script lang="ts">
     import type { Cell } from "../interfaces/cell";
+    import { Type } from "../interfaces/type";
+    
 
-    let cell : Cell = {
-        ship: false,
-        hit: false,
-        score: 0
-    }
-
+    export let cell : Cell
 </script>
 
-{#if cell.hit == true && cell.ship == true}
+{#if cell.hit == true && cell.ship !=  Type.none}
     <div class="cell-hit"> </div>
 
-{:else if cell.hit == true && cell.ship == false}
+{:else if cell.hit == true && cell.ship == Type.none}
     <div class="cell-miss"> </div>   
 
 {:else}
-    {#if cell.hit == false && cell.ship == true}
+    {#if cell.hit == false && cell.ship !=  Type.none}
         <div class="cell-ship"></div>
 
     {:else}
@@ -27,30 +24,30 @@
 
 <style>
     .cell-empty {
-        height: 50px;
-        width: 50px;
+        height: 40px;
+        width: 40px;
         background-color: #5c93e5;
-        outline: 0.5px solid black;
+        outline: 0.5px solid rgb(255, 255, 255);
     }
 
     .cell-hit {
-        height: 50px;
-        width: 50px;
+        height: 40px;
+        width: 40px;
         background-color: #ff0000;
-        outline: 0.5px solid black;
+        outline: 0.5px solid rgb(255, 255, 255);
     }
 
     .cell-miss {
-        height: 50px;
-        width: 50px;
+        height: 40px;
+        width: 40px;
         background-color: #000000;
-        outline: 0.5px solid black;
+        outline: 0.5px solid rgb(255, 255, 255);
     }
 
-    .cell-miss {
-        height: 50px;
-        width: 50px;
-        background-color: #676767;
-        outline: 0.5px solid black;
+    .cell-ship {
+        height: 40px;
+        width: 40px;
+        background-color: #b8b8b8;
+        outline: 0.5px solid rgb(255, 255, 255);
     }
 </style>

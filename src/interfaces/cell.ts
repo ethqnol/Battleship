@@ -1,5 +1,8 @@
+import type { Type } from "./type";
+
+
 export interface Cell {
-    ship: boolean;
+    ship: Type;
     hit: boolean;
     score: number
 }
