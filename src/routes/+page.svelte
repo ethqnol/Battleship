@@ -365,7 +365,7 @@
       return bestTarget;
     }
 
-    
+
     function playComputerMove() {
 
       evalProbabilityMap()
@@ -531,8 +531,9 @@
     <h1>You Won</h1>
     <button on:click={() => location.reload()}> Restart </button>
       <div class="board">
-        <div class="grid">
         <h2>Your Board:</h2>
+        <div class="grid">
+        
         <div class="grid">
           
           <div class="row">
