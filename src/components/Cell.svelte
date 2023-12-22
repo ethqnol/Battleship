@@ -26,11 +26,21 @@
         outline: 0.5px solid rgb(255, 255, 255);
     }
 
-    .cell-sunk{
+    .cell-sunk {
         height: 40px;
         width: 40px;
-        background-color: #851010;
+        background-color: #8c0000; /* Red for hit cells */
         outline: 0.5px solid rgb(255, 255, 255);
+        &:after {
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            content: "\2715";
+            font-size: 52px;
+            color: #fff;
+            line-height: 45px;
+        }
     }
 
     .cell-hit {
@@ -39,11 +49,11 @@
         background-color: #ff0000;
         outline: 0.5px solid rgb(255, 255, 255);
     }
-
     .cell-miss {
         height: 40px;
         width: 40px;
-        background-color: #727272;
+        background-color: #0014ad;
         outline: 0.5px solid rgb(255, 255, 255);
+
     }
 </style>

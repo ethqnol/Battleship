@@ -4,28 +4,30 @@
     
 
     export let cell : Cell
+    console.log(cell.score)
 </script>
 
 
-{#if cell.sunk == true}
+
+
+{#if cell.sunk}
     <div class="cell-sunk"> </div>
-{:else if cell.hit == true && cell.ship !=  Type.none}
+{:else if cell.hit && cell.ship != Type.none}
     <div class="cell-hit"> </div>
 
-{:else if cell.hit == true && cell.ship == Type.none}
-    <div class="cell-miss"> </div>   
-
+{:else if cell.hit }
+    <div class="cell-miss"> </div>
 {:else}
-    {#if cell.hit == false && cell.ship !=  Type.none}
-        <div class="cell-ship"></div>
-
-    {:else}
-        <div class="cell-empty"></div>
-
-    {/if}
+    <div class="cell" style={`background-color: rgb(calc(10.1 * ${cell.score}), calc(8.1 * ${cell.score}), ${cell.score})`}> </div>
 {/if}
 
 <style>
+    .cell-hit {
+        height: 40px;
+        width: 40px;
+        background-color: #ff0000; /* Red for hit cells */
+        outline: 0.5px solid rgb(255, 255, 255);
+    }
     .cell-sunk {
         height: 40px;
         width: 40px;
@@ -42,17 +44,10 @@
             line-height: 45px;
         }
     }
-    .cell-empty {
-        height: 40px;
-        width: 40px;
-        background-color: #5c93e5;
-        outline: 0.5px solid rgb(255, 255, 255);
-    }
 
-    .cell-hit {
+    .cell {
         height: 40px;
         width: 40px;
-        background-color: #ff0000;
         outline: 0.5px solid rgb(255, 255, 255);
     }
 
@@ -62,12 +57,5 @@
         background-color: #0014ad;
         outline: 0.5px solid rgb(255, 255, 255);
 
-    }
-
-    .cell-ship {
-        height: 40px;
-        width: 40px;
-        background-color: #b8b8b8;
-        outline: 0.5px solid rgb(255, 255, 255);
     }
 </style>

@@ -806,11 +806,6 @@
       gap: 1rem;
     }
 
-    .overlay-player{
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
 
     button {
       color: white;

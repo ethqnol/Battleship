@@ -2,8 +2,7 @@
 
 <script lang="ts">
     import type { Ship } from "../../interfaces/ship";
-    import GridCell from "../../components/Cell.svelte";
-    import { afterUpdate } from "svelte";
+    import HeatCell from "../../components/HeatCell.svelte";
     import OwnGridCell from "../../components/OwnCell.svelte";
     import type { Cell } from "../../interfaces/cell";
     import { Type } from "../../interfaces/type";
@@ -23,8 +22,13 @@
     let defaultCell : Cell = { ship: Type.none, hit: false, score: 0, sunk: false };
     let yourGrid = Array.from({length: GRIDWIDTH}, e => Array(GRIDWIDTH).fill(defaultCell));
     let computerProbabilityMap = Array.from({length: GRIDWIDTH}, e => Array(GRIDWIDTH).fill(defaultCell));
+    let probMapToggle = false;
+    evalProbabilityMap()
+
 
     function reset() {
+      
+      started = false
       computerWin = false;
       moves = 0;
       playerShips = [
@@ -40,6 +44,8 @@
       let defaultCell : Cell = { ship: Type.none, hit: false, score: 0, sunk: false };
       yourGrid = Array.from({length: GRIDWIDTH}, e => Array(GRIDWIDTH).fill(defaultCell));
       computerProbabilityMap = Array.from({length: GRIDWIDTH}, e => Array(GRIDWIDTH).fill(defaultCell));
+      
+      evalProbabilityMap()
     }
 
 
@@ -177,15 +183,20 @@
         }
       }
     }
-
-    
-   
+    function sleep (time: number) {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
     function start() {
       reset();
-      started = true;
       placeShips(yourGrid, playerShips)
-      setTimeout(function() {
-        playComputerMove()}, 400)
+      sleep(1000).then(()=> { 
+        started = true
+        playComputerMove()
+      })
+      
+      
+      
+ 
     }
 
 
@@ -294,7 +305,7 @@
       let bestTarget = { col: 0, row: 0 };
 
       let direction = Math.floor(Math.random() * 4);
-
+    
       if(direction == 0){
         for (let x = 0; x < GRIDWIDTH; x += 1) {
           for (let y = 0; y < GRIDWIDTH; y += 1) {
@@ -337,9 +348,11 @@
 
 
     function playComputerMove() {
-
+      if(started == false){
+        return;
+      }
+      
       evalProbabilityMap()
-       
       let bestTarget = findHighestProbabilityCell();
       let computerTarget = yourGrid[bestTarget.col][bestTarget.row];
       yourGrid[bestTarget.col][bestTarget.row] = { ship: computerTarget.ship, hit: true, score: 0, sunk: false}
@@ -349,7 +362,7 @@
         let hitShip = playerShips.find(ship => ship.type == yourGrid[bestTarget.col][bestTarget.row].ship)
         hitShip?.hits.push({col: bestTarget.col, row: bestTarget.row})
         console.log(hitShip)
-        if(hitShip && hitShip?.hits.length == hitShip?.size){
+        if(hitShip && hitShip?.hits.length >= hitShip?.size){
           hitShip.sunk = true;
           hitShip.hits.map((pos : Position) => {
             yourGrid[pos.col][pos.row] = { ship: yourGrid[pos.col][pos.row].ship, hit: true, score: 0, sunk: true}
@@ -357,17 +370,24 @@
           })
           if(!playerShips.find(ship => ship.sunk == false)){
             computerWin = true;
+            for (let x = 0; x < GRIDWIDTH; x++) {
+                for (let y = 0; y < GRIDWIDTH; y++) {
+                computerProbabilityMap[x][y].score = 0;
+                }
+            }
             return;
           }
         }
         moves += 1
         setTimeout(function() {
-        playComputerMove()}, 400)
+            playComputerMove()}, 400)
+            return;
         
       } else {
         moves += 1
         setTimeout(function() {
-        playComputerMove()}, 400)
+            playComputerMove()}, 400)
+        return;
       }
 
       
@@ -382,44 +402,71 @@
 
 
 <main>
+        <div class="setting">
+            <div>
+                <label for="grid-size"> Grid Size: </label>
+                <select id="grid-size" bind:value={GRIDWIDTH} on:change={reset}>
+                    {#each options as value}<option {value}>{value}</option>{/each}
+                </select>
+            </div>
 
-    <h2>Board:</h2>
-    
-
-    <div class="setting">
-        <label for="grid-size"> Grid Size: </label>
-        <select id="grid-size" bind:value={GRIDWIDTH} on:change={reset}>
-            
-            {#each options as value}<option {value}>{value}</option>{/each}
-        </select>
-    </div>
-    <h1> # Of Moves: {moves}</h1>
-
-    <button on:click={start}> Begin Simulation </button>
-      <div class="board">
-        
-        <div class="grid">
-          
-          <div class="row">
-            <div class="coords">{" "}</div>
-            {#each yourGrid[0] as _, j}
-              <div class="coords">{j}</div>
-            {/each}
-          </div>
-
-          <div class="column">
-            {#each yourGrid as column, i}
-              <div class="row">
-                <div class= "coords">{i}</div> 
-                {#each column as cell}
-                  <OwnGridCell {cell} />
-                {/each}
-              </div>
-            {/each}
-          </div>
+            <div>
+                <label for=".switch">Toggle Probability Map:</label>
+                <label class="switch">
+                    <input type="checkbox" bind:checked={probMapToggle}>
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
-      </div>
+        <h1> # Of Moves: {moves}</h1>
 
+        <button on:click={start}> Begin Simulation </button>
+
+        <div class="board">
+        {#if probMapToggle}
+            <div class="grid">
+                
+                <div class="row">
+                    <div class="coords">{" "}</div>
+                    {#each computerProbabilityMap[0] as _, j}
+                    <div class="coords">{j}</div>
+                    {/each}
+                </div>
+
+                <div class="column">
+                    {#each computerProbabilityMap as column, i}
+                    <div class="row">
+                        <div class= "coords">{i}</div> 
+                        {#each column as cell}
+                            <HeatCell {cell} />
+                        {/each}
+                    </div>
+                    {/each}
+                </div>
+            </div>
+        {:else }
+            <div class="grid">
+                
+                <div class="row">
+                <div class="coords">{" "}</div>
+                {#each yourGrid[0] as _, j}
+                    <div class="coords">{j}</div>
+                {/each}
+                </div>
+
+                <div class="column">
+                {#each yourGrid as column, i}
+                    <div class="row">
+                    <div class= "coords">{i}</div> 
+                    {#each column as cell}
+                        <OwnGridCell {cell} />
+                    {/each}
+                    </div>
+                {/each}
+                </div>
+            </div>
+        {/if}
+    </div>
 </main>
   
 
@@ -475,26 +522,6 @@
       padding: 5px;
       border-radius: 2px;
     }
-    .start-button {
-      color: white;
-      font-size: 1rem;
-      font-weight: 900;
-      padding: 5px;
-      border: none;
-      border-radius: 5px;
-      background-color: blue;
-    }
-
-    .start-button:hover {
-      color: white;
-      font-size: 1rem;
-      font-weight: 900;
-      padding: 5px;
-      border: none;
-      border-radius: 5px;
-      background-color: rgb(18, 18, 125);
-      cursor: pointer
-    }
 
     h1 {
         
@@ -504,22 +531,58 @@
       font-weight: 900;
     }
 
-    h2{
-      font-family:'Courier New', Courier, monospace;
+    .switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
     }
 
-    h4{
-      font-family:'Courier New', Courier, monospace;
-      text-align: center;
-      font-size: 1.8rem;
-      color: white;
-      margin: 0px;
-      padding: 15px;
-      font-weight: 900;
-      border-radius: 4px;
+    /* Hide default HTML checkbox */
+    .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
     }
 
+    /* The slider */
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
 
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+    input:checked + .slider {
+        background-color: #2196F3;
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px #2196F3;
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(22px);
+        -ms-transform: translateX(22px);
+        transform: translateX(22px);
+    }
 
     button {
       color: white;
@@ -544,6 +607,9 @@
 
     .setting {
         margin-top: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
 
     label {
