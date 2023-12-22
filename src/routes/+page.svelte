@@ -8,6 +8,9 @@
     import type { Cell } from "../interfaces/cell";
     import { Type } from "../interfaces/type";
     import type { Position } from "../interfaces/position";
+    import { goto } from "$app/navigation";
+    let computerWin = false;
+    let playerWin = false;
     let playerturn = true;
     let started = false;
     let errors : string[] = [];
@@ -32,8 +35,10 @@
     let computerProbabilityMap : Cell[][] = Array.from({length: 10}, e => Array(10).fill(defaultCell));
 
     function reset() {
+      computerWin = false;
+      playerWin = false;
       errors = [];
-      let playerturn = true;
+      playerturn = true;
       playerShips = [
         { type: Type.carrier, size: 5, hits: [], location: [], sunk: false },
         { type: Type.battleship, size: 4, hits: [], location: [], sunk: false  },
@@ -217,11 +222,16 @@
     function evalProbabilityMap() {
       for (let x = 0; x < 10; x++) {
         for (let y = 0; y < 10; y++) {
-
-          
+          computerProbabilityMap[x][y].score = 0;
+        }
+      }
+      for (let x = 0; x < 10; x++) {
+        for (let y = 0; y < 10; y++) {
           let score = 0;
           for (let i = 0; i < playerShips.length; i++) {
-            
+            if(playerShips[i].sunk == true && (playerShips[i].size == 2 || playerShips[i].size == 3)){
+              continue;
+            } else {
               let shipSize = playerShips[i].size
 
               for(let index = x - shipSize + 1; index <= x; index ++){
@@ -257,40 +267,47 @@
                   if(fits) score += 1;
                 }
               }
-              
-          
+            }  
+            
             if(computerProbabilityMap[x][y].hit == true && computerProbabilityMap[x][y].sunk == false && computerProbabilityMap[x][y].ship != Type.none){
              
-             if(x+1 <= 9 && computerProbabilityMap[x+1][y].hit == false) {
+             if(x+1 <= 9) {
+              if(computerProbabilityMap[x+1][y].hit == false){
                if(x-1 >= 0 && computerProbabilityMap[x-1][y].sunk == false && computerProbabilityMap[x-1][y].hit == true && computerProbabilityMap[x-1][y].ship != Type.none){
-                 console.log("JKLDFSH")
                  computerProbabilityMap[x+1][y] = { ship: computerProbabilityMap[x+1][y].ship, hit: computerProbabilityMap[x+1][y].hit, score: computerProbabilityMap[x+1][y].score + 25, sunk: computerProbabilityMap[x+1][y].sunk}
                } else {
                  computerProbabilityMap[x+1][y] = { ship: computerProbabilityMap[x+1][y].ship, hit: computerProbabilityMap[x+1][y].hit, score: computerProbabilityMap[x+1][y].score + 15, sunk: computerProbabilityMap[x+1][y].sunk}
                }
+              }
              }
-             if(x-1 >= 0 && computerProbabilityMap[x-1][y].hit == false) {
+             if(x-1 >= 0) {
+              if(computerProbabilityMap[x-1][y].hit == false){
                if(x+1 <= 9 && computerProbabilityMap[x+1][y].sunk == false && computerProbabilityMap[x+1][y].hit == true && computerProbabilityMap[x+1][y].ship != Type.none){
                  computerProbabilityMap[x-1][y] = { ship: computerProbabilityMap[x-1][y].ship, hit: computerProbabilityMap[x-1][y].hit, score: computerProbabilityMap[x-1][y].score + 25, sunk: computerProbabilityMap[x-1][y].sunk}
                } else {
                  computerProbabilityMap[x-1][y] = { ship: computerProbabilityMap[x-1][y].ship, hit: computerProbabilityMap[x-1][y].hit, score: computerProbabilityMap[x-1][y].score + 15, sunk: computerProbabilityMap[x-1][y].sunk}
                }
+              }
              }
-             if(y+1 <= 9 && computerProbabilityMap[x][y+1].hit == false) {
+             if(y+1 <= 9) {
+              if(computerProbabilityMap[x][y+1].hit == false){
                if(y-1 >= 0 && computerProbabilityMap[x][y-1].sunk == false && computerProbabilityMap[x][y-1].hit == true && computerProbabilityMap[x][y-1].ship != Type.none){
                  computerProbabilityMap[x][y+1] = { ship: computerProbabilityMap[x][y+1].ship, hit: computerProbabilityMap[x][y+1].hit, score: computerProbabilityMap[x][y+1].score + 25, sunk: computerProbabilityMap[x][y+1].sunk}
                } else {
                  computerProbabilityMap[x][y+1] = { ship: computerProbabilityMap[x][y+1].ship, hit: computerProbabilityMap[x][y+1].hit, score: computerProbabilityMap[x][y+1].score + 15, sunk: computerProbabilityMap[x][y+1].sunk}
                }
+              }
              }
-             if(y-1 >= 0 && computerProbabilityMap[x-1][y].hit == false) {
-               if(y+1 <= 9 && computerProbabilityMap[x][y+1].sunk == false &&  computerProbabilityMap[x][y+1].hit == true &&  computerProbabilityMap[x][y+1].ship != Type.none){
-                 computerProbabilityMap[x][y-1] = { ship: computerProbabilityMap[x][y-1].ship, hit: computerProbabilityMap[x][y-1].hit, score: computerProbabilityMap[x][y-1].score + 25, sunk: computerProbabilityMap[x][y-1].sunk}
-               } else {
-                 computerProbabilityMap[x][y-1] = { ship: computerProbabilityMap[x][y-1].ship, hit: computerProbabilityMap[x][y-1].hit, score: computerProbabilityMap[x][y-1].score + 15, sunk: computerProbabilityMap[x][y-1].sunk}
-               }
-             }
-           } else if(computerProbabilityMap[x][y].hit == true && computerProbabilityMap[x][y].ship == Type.none){
+             if(y-1 >= 0) {
+              if(computerProbabilityMap[x][y-1].hit == false){
+                if(y+1 <= 9 && computerProbabilityMap[x][y+1].sunk == false &&  computerProbabilityMap[x][y+1].hit == true &&  computerProbabilityMap[x][y+1].ship != Type.none){
+                  computerProbabilityMap[x][y-1] = { ship: computerProbabilityMap[x][y-1].ship, hit: computerProbabilityMap[x][y-1].hit, score: computerProbabilityMap[x][y-1].score + 25, sunk: computerProbabilityMap[x][y-1].sunk}
+                } else {
+                  computerProbabilityMap[x][y-1] = { ship: computerProbabilityMap[x][y-1].ship, hit: computerProbabilityMap[x][y-1].hit, score: computerProbabilityMap[x][y-1].score + 15, sunk: computerProbabilityMap[x][y-1].sunk}
+                }
+              }
+            }
+           } else if(computerProbabilityMap[x][y].hit == true){
              computerProbabilityMap[x][y] = { ship: computerProbabilityMap[x][y].ship, hit: true, score: 0, sunk: computerProbabilityMap[x][y].sunk}
            }
           }
@@ -304,18 +321,51 @@
     
     function findHighestProbabilityCell() {
       let highestScore = 0;
-      console.log(computerProbabilityMap)
       let bestTarget = { col: 0, row: 0 };
-      for (let x = 0; x < 10; x += 1) {
-        for (let y = 0; y < 10; y += 1) {
-          if (computerProbabilityMap[x][y].score > highestScore) {
-            highestScore = computerProbabilityMap[x][y].score;
-            bestTarget = { col: x, row: y };
+
+      let direction = Math.floor(Math.random() * 4);
+
+      if(direction == 0){
+        for (let x = 0; x < 10; x += 1) {
+          for (let y = 0; y < 10; y += 1) {
+            if (computerProbabilityMap[x][y].score > highestScore) {
+              highestScore = computerProbabilityMap[x][y].score;
+              bestTarget = { col: x, row: y };
+            }
+          }
+        }
+      } else if (direction == 1){
+        for (let x = 9; x >= 0; x -= 1) {
+          for (let y = 0; y < 10; y += 1) {
+            if (computerProbabilityMap[x][y].score > highestScore) {
+              highestScore = computerProbabilityMap[x][y].score;
+              bestTarget = { col: x, row: y };
+            }
+          }
+        }
+      } else if (direction == 2){
+        for (let x = 0; x < 10; x += 1) {
+          for (let y = 9; y >= 0; y -= 1) {
+            if (computerProbabilityMap[x][y].score > highestScore) {
+              highestScore = computerProbabilityMap[x][y].score;
+              bestTarget = { col: x, row: y };
+            }
+          }
+        }
+      } else {
+        for (let x = 9; x >= 0; x -= 1) {
+          for (let y = 9; y >= 0; y -= 1) {
+            if (computerProbabilityMap[x][y].score > highestScore) {
+              highestScore = computerProbabilityMap[x][y].score;
+              bestTarget = { col: x, row: y };
+            }
           }
         }
       }
       return bestTarget;
     }
+
+    
     function playComputerMove() {
 
       evalProbabilityMap()
@@ -335,12 +385,18 @@
             yourGrid[pos.col][pos.row] = { ship: yourGrid[pos.col][pos.row].ship, hit: true, score: 0, sunk: true}
             computerProbabilityMap[pos.col][pos.row] = { ship: yourGrid[pos.col][pos.row].ship, hit: true, score: 0, sunk: true}
           })
+          if(!playerShips.find(ship => ship.sunk == false)){
+            computerWin = true;
+            return;
+          }
         }
+        
         setTimeout(function() {
-        playComputerMove()}, 500)
+        playComputerMove()}, 400)
         
       } else {
         playerturn = true;
+        return;
       }
 
       
@@ -385,6 +441,10 @@
             hitShip.hits.map((pos : Position) => {
               opponentGrid[pos.col][pos.row] = { ship: opponentGrid[pos.col][pos.row].ship, hit: true, score: 0, sunk: true}
             })
+            if(!computerShips.find(ship => ship.sunk == false)){
+              playerWin = true;
+              return;
+            }
           }
 
         } else {
@@ -407,8 +467,122 @@
 
 <main>
   
+{#if computerWin}
+  <div class = "overlay-computer">
+      <h1>DEFEAT</h1>
+
+      <h1>The Computer Won</h1>
+      <button on:click={() => location.reload()}> Restart </button>
+      <div class="board">
+        <h2>Your Board:</h2>
+        <div class="grid">
+          
+          <div class="row">
+            <div class="coords">{" "}</div>
+            {#each yourGrid[0] as _, j}
+              <div class="coords">{j}</div>
+            {/each}
+          </div>
+  
+          <div class="column">
+            {#each yourGrid as column, i}
+              <div class="row">
+                <div class= "coords">{i}</div> 
+                {#each column as cell, j}
+                  <OwnGridCell {cell} />
+                {/each}
+              </div>
+            {/each}
+          </div>
+        </div>
+      </div>
+    </div>
+  
+  
+        <div class="board">
+          <h2>Opponent Board:</h2>
+          <div class="grid">
+            
+            <div class="row">
+              <div class="coords">{" "}</div>
+              {#each opponentGrid[0] as _, j}
+                <div class="coords">{j}</div>
+              {/each}
+            </div>
+  
+            <div class="column">
+              {#each opponentGrid as column, i}
+                <div class="row">
+                  <div class= "coords">{i}</div> 
+                  {#each column as cell}
+                    <OwnGridCell {cell} />
+                  {/each}
+                </div>
+              {/each}
+            </div>
+          </div>
+        </div>
+      
+  
+{:else if playerWin}
+  <div class = "overlay-computer">
+    <h1>VICTORY</h1>
+
+    <h1>You Won</h1>
+    <button on:click={() => location.reload()}> Restart </button>
+      <div class="board">
+        <div class="grid">
+        <h2>Your Board:</h2>
+        <div class="grid">
+          
+          <div class="row">
+            <div class="coords">{" "}</div>
+            {#each yourGrid[0] as _, j}
+              <div class="coords">{j}</div>
+            {/each}
+          </div>
+
+          <div class="column">
+            {#each yourGrid as column, i}
+              <div class="row">
+                <div class= "coords">{i}</div> 
+                {#each column as cell, j}
+                  <OwnGridCell {cell} />
+                {/each}
+              </div>
+            {/each}
+          </div>
+        </div>
+      </div>
+    </div>
 
 
+      <div class="board">
+        <h2>Opponent Board:</h2>
+        <div class="grid">
+          
+          <div class="row">
+            <div class="coords">{" "}</div>
+            {#each opponentGrid[0] as _, j}
+              <div class="coords">{j}</div>
+            {/each}
+          </div>
+
+          <div class="column">
+            {#each opponentGrid as column, i}
+              <div class="row">
+                <div class= "coords">{i}</div> 
+                {#each column as cell}
+                  <OwnGridCell {cell} />
+                {/each}
+              </div>
+            {/each}
+          </div>
+        </div>
+      </div>
+  </div>
+
+{:else}
   <div class="game">
     <div class="board">
       <h2>Your Board:</h2>
@@ -451,7 +625,7 @@
               <div class="row">
                 <div class= "coords">{i}</div> 
                 {#each column as cell}
-                  <OwnGridCell {cell} />
+                  <GridCell {cell} />
                 {/each}
               </div>
             {/each}
@@ -473,7 +647,8 @@
         </div>
       </div>
     </div>
-
+    
+  {/if}
 </main>
   
 
@@ -622,6 +797,39 @@
       background-color: rgb(171, 171, 171);
       border-radius: 10px;
       overflow-y: auto;
+    }
+
+    .overlay-computer {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .overlay-player{
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    button {
+      color: white;
+      font-size: 1rem;
+      font-weight: 900;
+      padding: 5px;
+      border: none;
+      border-radius: 5px;
+      background-color: blue;
+    }
+
+    button:hover {
+      color: white;
+      font-size: 1rem;
+      font-weight: 900;
+      padding: 5px;
+      border: none;
+      border-radius: 5px;
+      background-color: rgb(18, 18, 125);
+      cursor: pointer
     }
 </style>
  
