@@ -217,13 +217,11 @@
     function evalProbabilityMap() {
       for (let x = 0; x < 10; x++) {
         for (let y = 0; y < 10; y++) {
-          if(computerProbabilityMap[x][y].hit == true && computerProbabilityMap[x][y].ship == Type.none){
-            computerProbabilityMap[x][y] = { ship: computerProbabilityMap[x][y].ship, hit: true, score: 0, sunk: computerProbabilityMap[x][y].sunk}
-          }
+
           
           let score = 0;
           for (let i = 0; i < playerShips.length; i++) {
-            if (playerShips[i].sunk === true) {
+            if (playerShips[i].sunk == true) {
               continue;
             }
             let shipSize = playerShips[i].size
@@ -261,42 +259,50 @@
                 if(fits) score += 1;
               }
             }
-
-            if(computerProbabilityMap[x][y].hit == true && computerProbabilityMap[x][y].sunk == false && computerProbabilityMap[x][y].ship != Type.none){
-              if(y+1 <= 9 && computerProbabilityMap[x][y+1].hit == false) {
-                if(y-1 >= 0 && computerProbabilityMap[x][y-1].sunk == false && computerProbabilityMap[x][y-1].hit == true && computerProbabilityMap[x][y-1].ship != Type.none){
-                  computerProbabilityMap[x][y+1].score += 25
-                } else {
-                  computerProbabilityMap[x][y+1].score += 15
-                }
-              }
-              if(y-1 >= 0 && computerProbabilityMap[x][y-1].hit == false) {
-                if(y+1 <= 9 && computerProbabilityMap[x][y+1].sunk == false && computerProbabilityMap[x][y+1].hit == true && computerProbabilityMap[x][y+1].ship != Type.none){
-                  computerProbabilityMap[x][y-1].score += 25
-                } else {
-                  computerProbabilityMap[x][y-1].score += 15
-                }
-              }
-              if(x+1 <= 9 && computerProbabilityMap[x+1][y].hit == false) {
-                if(x-1 >= 0 && computerProbabilityMap[x-1][y].sunk == false && computerProbabilityMap[x-1][y].hit == true && computerProbabilityMap[x-1][y].ship != Type.none){
-                  computerProbabilityMap[x+1][y].score += 25
-                } else {
-                  computerProbabilityMap[x+1][y].score += 15
-                }
-              }
-              if(x-1 >= 0 && computerProbabilityMap[x-1][y].hit == false) {
-                if(x+1 <= 9 && computerProbabilityMap[x+1][y].sunk == false &&  computerProbabilityMap[x+1][y].hit == true &&  computerProbabilityMap[x+1][y].ship != Type.none){
-                  computerProbabilityMap[x-1][y].score += 25
-                } else {
-                  computerProbabilityMap[x-1][y].score += 15
-                }
-              }
-            }
-            
-           
           }
-          
-          computerProbabilityMap[x][y] = { ship: computerProbabilityMap[x][y].ship, hit: computerProbabilityMap[x][y].hit, score: score, sunk: false}
+
+          computerProbabilityMap[x][y] = { ship: computerProbabilityMap[x][y].ship, hit: computerProbabilityMap[x][y].hit, score: score, sunk: computerProbabilityMap[x][y].sunk}
+        }
+      }
+
+      for(const ship in playerShips){
+        for(let x = 0; x < 10; x ++){
+          for(let y = 0; y< 10; y++){
+            if(computerProbabilityMap[x][y].hit == true && computerProbabilityMap[x][y].sunk == false && computerProbabilityMap[x][y].ship != Type.none){
+             
+             if(x+1 <= 9 && computerProbabilityMap[x+1][y].hit == false) {
+               if(x-1 >= 0 && computerProbabilityMap[x-1][y].sunk == false && computerProbabilityMap[x-1][y].hit == true && computerProbabilityMap[x-1][y].ship != Type.none){
+                 console.log("JKLDFSH")
+                 computerProbabilityMap[x+1][y] = { ship: computerProbabilityMap[x+1][y].ship, hit: computerProbabilityMap[x+1][y].hit, score: computerProbabilityMap[x+1][y].score + 25, sunk: computerProbabilityMap[x+1][y].sunk}
+               } else {
+                 computerProbabilityMap[x+1][y] = { ship: computerProbabilityMap[x+1][y].ship, hit: computerProbabilityMap[x+1][y].hit, score: computerProbabilityMap[x+1][y].score + 15, sunk: computerProbabilityMap[x+1][y].sunk}
+               }
+             }
+             if(x-1 >= 0 && computerProbabilityMap[x-1][y].hit == false) {
+               if(x+1 <= 9 && computerProbabilityMap[x+1][y].sunk == false && computerProbabilityMap[x+1][y].hit == true && computerProbabilityMap[x+1][y].ship != Type.none){
+                 computerProbabilityMap[x-1][y] = { ship: computerProbabilityMap[x-1][y].ship, hit: computerProbabilityMap[x-1][y].hit, score: computerProbabilityMap[x-1][y].score + 25, sunk: computerProbabilityMap[x-1][y].sunk}
+               } else {
+                 computerProbabilityMap[x-1][y] = { ship: computerProbabilityMap[x-1][y].ship, hit: computerProbabilityMap[x-1][y].hit, score: computerProbabilityMap[x-1][y].score + 15, sunk: computerProbabilityMap[x-1][y].sunk}
+               }
+             }
+             if(y+1 <= 9 && computerProbabilityMap[x][y+1].hit == false) {
+               if(y-1 >= 0 && computerProbabilityMap[x][y-1].sunk == false && computerProbabilityMap[x][y-1].hit == true && computerProbabilityMap[x][y-1].ship != Type.none){
+                 computerProbabilityMap[x][y+1] = { ship: computerProbabilityMap[x][y+1].ship, hit: computerProbabilityMap[x][y+1].hit, score: computerProbabilityMap[x][y+1].score + 25, sunk: computerProbabilityMap[x][y+1].sunk}
+               } else {
+                 computerProbabilityMap[x][y+1] = { ship: computerProbabilityMap[x][y+1].ship, hit: computerProbabilityMap[x][y+1].hit, score: computerProbabilityMap[x][y+1].score + 15, sunk: computerProbabilityMap[x][y+1].sunk}
+               }
+             }
+             if(y-1 >= 0 && computerProbabilityMap[x-1][y].hit == false) {
+               if(y+1 <= 9 && computerProbabilityMap[x][y+1].sunk == false &&  computerProbabilityMap[x][y+1].hit == true &&  computerProbabilityMap[x][y+1].ship != Type.none){
+                 computerProbabilityMap[x][y-1] = { ship: computerProbabilityMap[x][y-1].ship, hit: computerProbabilityMap[x][y-1].hit, score: computerProbabilityMap[x][y-1].score + 25, sunk: computerProbabilityMap[x][y-1].sunk}
+               } else {
+                 computerProbabilityMap[x][y-1] = { ship: computerProbabilityMap[x][y-1].ship, hit: computerProbabilityMap[x][y-1].hit, score: computerProbabilityMap[x][y-1].score + 15, sunk: computerProbabilityMap[x][y-1].sunk}
+               }
+             }
+           } else if(computerProbabilityMap[x][y].hit == true && computerProbabilityMap[x][y].ship == Type.none){
+             computerProbabilityMap[x][y] = { ship: computerProbabilityMap[x][y].ship, hit: true, score: 0, sunk: computerProbabilityMap[x][y].sunk}
+           }
+          }
         }
       }
     }
@@ -305,7 +311,6 @@
     function findHighestProbabilityCell() {
       let highestScore = 0;
       console.log(computerProbabilityMap)
-      console.log(computerProbabilityMap[4][4].score)
       let bestTarget = { col: 0, row: 0 };
       for (let x = 0; x < 10; x += 1) {
         for (let y = 0; y < 10; y += 1) {
