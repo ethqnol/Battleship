@@ -221,53 +221,44 @@
           
           let score = 0;
           for (let i = 0; i < playerShips.length; i++) {
-            if (playerShips[i].sunk == true) {
-              continue;
-            }
-            let shipSize = playerShips[i].size
-
-            for(let index = x - shipSize + 1; index <= x; index ++){
-              if(index + shipSize - 1 > 9){
-                break;
-              }
-              if(index >= 0){
-                let fits = true;
-                for(let j = 0; j < shipSize; j++){
-                  if(computerProbabilityMap[index + j][y].hit == true){
-                    fits = false;
-                    break;
-                  }
-
-                }
-                if(fits) score += 1;
-              }
-            }
             
-            for(let index = y - shipSize + 1; index <= y; index ++){
-              if(index + shipSize - 1 > 9){
-                break;
-              }
-              if(index >= 0){
-                let fits = true;
-                for(let j = 0; j < shipSize; j++){
-                  if(computerProbabilityMap[x][index + j].hit == true){
-                    fits = false;
-                    break;
-                  }
+              let shipSize = playerShips[i].size
 
+              for(let index = x - shipSize + 1; index <= x; index ++){
+                if(index + shipSize - 1 > 9){
+                  break;
                 }
-                if(fits) score += 1;
+                if(index >= 0){
+                  let fits = true;
+                  for(let j = 0; j < shipSize; j++){
+                    if(computerProbabilityMap[index + j][y].hit == true){
+                      fits = false;
+                      break;
+                    }
+
+                  }
+                  if(fits) score += 1;
+                }
               }
-            }
-          }
+              
+              for(let index = y - shipSize + 1; index <= y; index ++){
+                if(index + shipSize - 1 > 9){
+                  break;
+                }
+                if(index >= 0){
+                  let fits = true;
+                  for(let j = 0; j < shipSize; j++){
+                    if(computerProbabilityMap[x][index + j].hit == true){
+                      fits = false;
+                      break;
+                    }
 
-          computerProbabilityMap[x][y] = { ship: computerProbabilityMap[x][y].ship, hit: computerProbabilityMap[x][y].hit, score: score, sunk: computerProbabilityMap[x][y].sunk}
-        }
-      }
-
-      for(const ship in playerShips){
-        for(let x = 0; x < 10; x ++){
-          for(let y = 0; y< 10; y++){
+                  }
+                  if(fits) score += 1;
+                }
+              }
+              
+          
             if(computerProbabilityMap[x][y].hit == true && computerProbabilityMap[x][y].sunk == false && computerProbabilityMap[x][y].ship != Type.none){
              
              if(x+1 <= 9 && computerProbabilityMap[x+1][y].hit == false) {
@@ -303,8 +294,11 @@
              computerProbabilityMap[x][y] = { ship: computerProbabilityMap[x][y].ship, hit: true, score: 0, sunk: computerProbabilityMap[x][y].sunk}
            }
           }
+
+          computerProbabilityMap[x][y] = { ship: computerProbabilityMap[x][y].ship, hit: computerProbabilityMap[x][y].hit, score: computerProbabilityMap[x][y].score+score, sunk: computerProbabilityMap[x][y].sunk}
         }
       }
+
     }
 
     
