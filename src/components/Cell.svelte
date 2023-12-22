@@ -5,8 +5,9 @@
     export let cell: Cell;
 
 </script>
-
-{#if cell.hit == true && cell.ship != Type.none}
+{#if cell.sunk == true}
+    <div class="cell-sunk"> </div>
+{:else if cell.hit == true && cell.ship != Type.none}
     <div class="cell-hit"> </div>
 
 {:else if cell.hit == true && cell.ship == Type.none}
@@ -25,6 +26,13 @@
         outline: 0.5px solid rgb(255, 255, 255);
     }
 
+    .cell-sunk{
+        height: 40px;
+        width: 40px;
+        background-color: #851010;
+        outline: 0.5px solid rgb(255, 255, 255);
+    }
+
     .cell-hit {
         height: 40px;
         width: 40px;
@@ -35,7 +43,7 @@
     .cell-miss {
         height: 40px;
         width: 40px;
-        background-color: #676767;
+        background-color: #727272;
         outline: 0.5px solid rgb(255, 255, 255);
     }
 </style>

@@ -1,6 +1,9 @@
-<script lang="ts">
+
+
+    <script lang="ts">
     import type { Ship } from "../interfaces/ship";
     import GridCell from "../components/Cell.svelte";
+    import { afterUpdate } from "svelte";
     import OwnGridCell from "../components/OwnCell.svelte";
     import type { Cell } from "../interfaces/cell";
     import { Type } from "../interfaces/type";
@@ -23,10 +26,11 @@
         { type: Type.destroyer, size: 3, hits: [], location: [], sunk: false  },
         { type: Type.submarine, size: 2, hits: [], location: [], sunk: false  },
     ];
-    let defaultCell : Cell = { ship: Type.none, hit: false, score: 0 };
+    let defaultCell : Cell = { ship: Type.none, hit: false, score: 0, sunk: false };
     let yourGrid : Cell[][] = Array.from({length: 10}, e => Array(10).fill(defaultCell));
     let opponentGrid : Cell[][] = Array.from({length: 10}, e => Array(10).fill(defaultCell));
-    
+    let computerProbabilityMap : Cell[][] = Array.from({length: 10}, e => Array(10).fill(defaultCell));
+
     function reset() {
       errors = [];
       let playerturn = true;
@@ -47,9 +51,12 @@
     ];
 
 
-      let defaultCell : Cell = { ship: Type.none, hit: false, score: 0 };
+      let defaultCell : Cell = { ship: Type.none, hit: false, score: 0, sunk: false };
       yourGrid = Array.from({length: 10}, e => Array(10).fill(defaultCell));
       opponentGrid = Array.from({length: 10}, e => Array(10).fill(defaultCell));
+      computerProbabilityMap = Array.from({length: 10}, e => Array(10).fill(defaultCell));
+      placeShips(yourGrid, playerShips);
+      placeShips(opponentGrid, computerShips);
     }
 
 
@@ -168,7 +175,7 @@
               col: x
             }
             
-            grid[x][y] = { ship: ships[i].type, hit: false, score: 0};
+            grid[x][y] = { ship: ships[i].type, hit: false, score: 0, sunk: false};
 
             ships[i].location.push(newPosition);
           }
@@ -180,28 +187,218 @@
               col: x
             }
             
-            grid[x][y] = { ship: ships[i].type, hit: false, score: 0};
+            grid[x][y] = { ship: ships[i].type, hit: false, score: 0, sunk: false};
 
             ships[i].location.push(newPosition);
           }
         }
       }
     }
-
+    let errorbox: any;
+    const scrollToBottom = (node: HTMLUListElement) => {
+      node.scroll({ top: node.scrollHeight, behavior: 'smooth' });
+    }; 
+    
+    afterUpdate(() => {
+      if(errors) scrollToBottom(errorbox);
+    });
+    $: if(errors && errorbox){
+      scrollToBottom(errorbox)
+    }
     function start() {
       reset();
       started = true;
-      placeShips(yourGrid, playerShips);
-      placeShips(opponentGrid, computerShips);
     }
 
 
-    let xCoord: number;
-    let yCoord: number;
+    let xCoord: string;
+    let yCoord: string;
+
+    function evalProbabilityMap() {
+      for (let x = 0; x < 10; x++) {
+        for (let y = 0; y < 10; y++) {
+          if(computerProbabilityMap[x][y].hit == true && computerProbabilityMap[x][y].ship == Type.none){
+            computerProbabilityMap[x][y] = { ship: computerProbabilityMap[x][y].ship, hit: true, score: 0, sunk: computerProbabilityMap[x][y].sunk}
+          }
+          
+          let score = 0;
+          for (let i = 0; i < playerShips.length; i++) {
+            if (playerShips[i].sunk === true) {
+              continue;
+            }
+            let shipSize = playerShips[i].size
+
+            for(let index = x - shipSize + 1; index <= x; index ++){
+              if(index + shipSize - 1 > 9){
+                break;
+              }
+              if(index >= 0){
+                let fits = true;
+                for(let j = 0; j < shipSize; j++){
+                  if(computerProbabilityMap[index + j][y].hit == true){
+                    fits = false;
+                    break;
+                  }
+
+                }
+                if(fits) score += 1;
+              }
+            }
+            
+            for(let index = y - shipSize + 1; index <= y; index ++){
+              if(index + shipSize - 1 > 9){
+                break;
+              }
+              if(index >= 0){
+                let fits = true;
+                for(let j = 0; j < shipSize; j++){
+                  if(computerProbabilityMap[x][index + j].hit == true){
+                    fits = false;
+                    break;
+                  }
+
+                }
+                if(fits) score += 1;
+              }
+            }
+
+            if(computerProbabilityMap[x][y].hit == true && computerProbabilityMap[x][y].sunk == false && computerProbabilityMap[x][y].ship != Type.none){
+              if(y+1 <= 9 && computerProbabilityMap[x][y+1].hit == false) {
+                if(y-1 >= 0 && computerProbabilityMap[x][y-1].sunk == false && computerProbabilityMap[x][y-1].hit == true && computerProbabilityMap[x][y-1].ship != Type.none){
+                  computerProbabilityMap[x][y+1].score += 25
+                } else {
+                  computerProbabilityMap[x][y+1].score += 15
+                }
+              }
+              if(y-1 >= 0 && computerProbabilityMap[x][y-1].hit == false) {
+                if(y+1 <= 9 && computerProbabilityMap[x][y+1].sunk == false && computerProbabilityMap[x][y+1].hit == true && computerProbabilityMap[x][y+1].ship != Type.none){
+                  computerProbabilityMap[x][y-1].score += 25
+                } else {
+                  computerProbabilityMap[x][y-1].score += 15
+                }
+              }
+              if(x+1 <= 9 && computerProbabilityMap[x+1][y].hit == false) {
+                if(x-1 >= 0 && computerProbabilityMap[x-1][y].sunk == false && computerProbabilityMap[x-1][y].hit == true && computerProbabilityMap[x-1][y].ship != Type.none){
+                  computerProbabilityMap[x+1][y].score += 25
+                } else {
+                  computerProbabilityMap[x+1][y].score += 15
+                }
+              }
+              if(x-1 >= 0 && computerProbabilityMap[x-1][y].hit == false) {
+                if(x+1 <= 9 && computerProbabilityMap[x+1][y].sunk == false &&  computerProbabilityMap[x+1][y].hit == true &&  computerProbabilityMap[x+1][y].ship != Type.none){
+                  computerProbabilityMap[x-1][y].score += 25
+                } else {
+                  computerProbabilityMap[x-1][y].score += 15
+                }
+              }
+            }
+            
+           
+          }
+          
+          computerProbabilityMap[x][y] = { ship: computerProbabilityMap[x][y].ship, hit: computerProbabilityMap[x][y].hit, score: score, sunk: false}
+        }
+      }
+    }
+
+    
+    function findHighestProbabilityCell() {
+      let highestScore = 0;
+      console.log(computerProbabilityMap)
+      console.log(computerProbabilityMap[4][4].score)
+      let bestTarget = { col: 0, row: 0 };
+      for (let x = 0; x < 10; x += 1) {
+        for (let y = 0; y < 10; y += 1) {
+          if (computerProbabilityMap[x][y].score > highestScore) {
+            highestScore = computerProbabilityMap[x][y].score;
+            bestTarget = { col: x, row: y };
+          }
+        }
+      }
+      return bestTarget;
+    }
+    function playComputerMove() {
+
+      evalProbabilityMap()
+       
+      let bestTarget = findHighestProbabilityCell();
+      let computerTarget = yourGrid[bestTarget.col][bestTarget.row];
+      yourGrid[bestTarget.col][bestTarget.row] = { ship: computerTarget.ship, hit: true, score: 0, sunk: false}
+      computerProbabilityMap[bestTarget.col][bestTarget.row] = { ship: computerTarget.ship, hit: true, score: 0, sunk: false}
+      
+      if(yourGrid[bestTarget.col][bestTarget.row].ship != Type.none){
+        let hitShip = playerShips.find(ship => ship.type == yourGrid[bestTarget.col][bestTarget.row].ship)
+        hitShip?.hits.push({col: bestTarget.col, row: bestTarget.row})
+        console.log(hitShip)
+        if(hitShip && hitShip?.hits.length == hitShip?.size){
+          hitShip.sunk = true;
+          hitShip.hits.map((pos : Position) => {
+            yourGrid[pos.col][pos.row] = { ship: yourGrid[pos.col][pos.row].ship, hit: true, score: 0, sunk: true}
+            computerProbabilityMap[pos.col][pos.row] = { ship: yourGrid[pos.col][pos.row].ship, hit: true, score: 0, sunk: true}
+          })
+        }
+        setTimeout(function() {
+        playComputerMove()}, 500)
+        
+      } else {
+        playerturn = true;
+      }
+
+      
+      
+      return;
+    }
 
     function handleInput() {
-      if(playerturn){
+      if(!started){
+        errors.push("Click the start button");
+        errors = errors;
+        return;
+      }
+      if(!playerturn){
+        errors.push("It is not your turn");
+        errors = errors;
+        return;
+      }
+
+      if(isNaN(parseInt(xCoord)) || parseInt(xCoord) > 9){
+        errors.push("Column coordinate should be between 0 and 9 inclusive, given " + xCoord);
+        errors = errors;
+        return;
+      }
+
+      if(isNaN(parseInt(yCoord)) || parseInt(yCoord) > 9){
+        errors.push("Row coordinate should be between 0 and 9 inclusive, given " + yCoord);
+        errors = errors;
+        return;
+      }
+      let x = parseInt(xCoord);
+      let y = parseInt(yCoord)
+      if(opponentGrid[x][y].hit == false){
         
+        if(opponentGrid[x][y].ship != Type.none){
+          opponentGrid[x][y].hit = true;
+          let hitShip = computerShips.find(ship => ship.type == opponentGrid[x][y].ship)
+          hitShip?.hits.push({col: x, row: y})
+
+          if(hitShip && hitShip?.hits.length == hitShip?.size){
+            hitShip.sunk = true;
+            hitShip.hits.map((pos : Position) => {
+              opponentGrid[pos.col][pos.row] = { ship: opponentGrid[pos.col][pos.row].ship, hit: true, score: 0, sunk: true}
+            })
+          }
+
+        } else {
+          opponentGrid[x][y] = { ship: Type.none, hit: true, score: 0, sunk: false};
+          playerturn = false;
+          playComputerMove();
+        }
+        
+        return;
+      } else {
+        errors.push("You have already fired on coordinates [" + x + ", " + y + "]");
+        errors = errors;
+        return;
       }
     }
     
@@ -269,7 +466,7 @@
         <input bind:value={xCoord} placeholder="Enter Column"/>
         <input bind:value={yCoord} placeholder="Enter Row"/>
         <button class="shoot-button" on:click={handleInput}> FIRE! </button>
-        <div class="error-box">
+        <div bind:this={errorbox} class="error-box">
           <h3> Error Outputs:</h3>
           {#each errors as error}
             <p>> Error: {error}</p>
@@ -336,7 +533,9 @@
       gap: 0.5rem;
       padding:5px;
       border: 2px solid black;
-      border-radius: 5px;;
+      border-radius: 5px;
+      max-width: 15vw;
+      width: 15vw;
     }
     
     input{
@@ -350,6 +549,17 @@
       border: none;
       border-radius: 5px;
       background-color: blue;
+    }
+
+    .start-button:hover {
+      color: white;
+      font-size: 1rem;
+      font-weight: 900;
+      padding: 5px;
+      border: none;
+      border-radius: 5px;
+      background-color: rgb(18, 18, 125);
+      cursor: pointer
     }
     .shoot-button {
       color: white;
@@ -369,6 +579,7 @@
       border: none;
       border-radius: 5px;
       background-color: rgb(181, 28, 28);
+      cursor: pointer
     }
 
     h1 {
@@ -414,3 +625,4 @@
       overflow-y: auto;
     }
 </style>
+ 
